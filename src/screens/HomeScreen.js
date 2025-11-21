@@ -105,6 +105,47 @@ const toggleStyles = StyleSheet.create({
   },
 });
 
+// --- CreateRideButton (Yolculuk Oluştur Butonu) ---
+// Bu bileşen dışarıdan 'role' (şu anki rol) ve 'onPress' (tıklanma fonksiyonu) alır.
+const CreateRideButton = ({ role, onPress }) => {
+  // Eğer rol 'driver' değilse, hiçbir şey gösterme (null döndür).
+  if (role !== 'driver') {
+    return null;
+  }
+
+  return (
+    // Butonun kendisi
+    <TouchableOpacity style={createRideStyles.button} onPress={onPress} activeOpacity={0.8}>
+      {/* Butonun içindeki metin */}
+      <Text style={createRideStyles.text}>Yolculuk Oluştur</Text>
+      {/* İleride buraya bir '+' ikonu da ekleyebiliriz */}
+    </TouchableOpacity>
+  );
+};
+
+// CreateRideButton Bileşeninin Stilleri
+const createRideStyles = StyleSheet.create({
+  button: {
+    backgroundColor: colors.primary, // Sürücü rengi (Canlı Yeşil)
+    paddingVertical: 15, // Dikey dolgu
+    borderRadius: 12, // Yuvarlak köşeler
+    alignItems: 'center', // Yazıyı ortala
+    marginTop: 10, // Üstten boşluk (Bilgi kutusu ile arası)
+    // Belirgin bir gölge efekti
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  text: {
+    color: colors.white, // Beyaz yazı
+    fontWeight: 'bold',
+    fontSize: 18, // Büyük puntolu yazı
+  },
+});
+// ---------------------------------------------------------------
+
 const HomeScreen = ({ navigation }) => {
   const [role, setRole] = React.useState('passenger');
   const [location, setLocation] = useState(null);
@@ -136,6 +177,15 @@ const HomeScreen = ({ navigation }) => {
       }
     })();
   }, []);
+
+  // --- Yolculuk Oluştur Butonuna Tıklanınca ---
+  const handleCreateRide = () => {
+    // Şimdilik sadece bir uyarı gösterelim.
+    // Bir sonraki adımda (M), burada yeni bir ekran açacağız.
+    Alert.alert('Yakında', 'Yolculuk oluşturma ekranı çok yakında burada olacak!');
+    // Örn: navigation.navigate('CreateRide');
+  };
+  // -----------------------------------------------------------
 
   const handleSignOut = async () => {
     try {
@@ -194,7 +244,14 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.infoBox}>
            <Text style={styles.infoText}>Giriş yapan kullanıcı: {auth.currentUser?.email}</Text>
         </View>
-        <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
+
+        {/* --- YENİ EKLENEN KISIM: CreateRideButton Bileşeni --- */}
+        {/* 'role' state'ini ve tıklama fonksiyonunu gönderiyoruz */}
+        <CreateRideButton role={role} onPress={handleCreateRide} />
+        {/* ---------------------------------------------------- */}
+
+        {/* Çıkış Yap Butonu (Biraz boşluk bırakmak için marginTop ekleyelim) */}
+        <TouchableOpacity onPress={handleSignOut} style={[styles.signOutButton, { marginTop: role === 'driver' ? 20 : 0 }]}>
           <Text style={styles.buttonText}>Çıkış Yap</Text>
         </TouchableOpacity>
       </View>
