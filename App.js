@@ -1,38 +1,20 @@
+// App.js
+
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+// Navigasyon dosyamızı içe aktarıyoruz
+// Eğer App.js ana dizindeyse yol: './src/navigation/AppNavigator'
+// Eğer App.js src içindeyse yol: './navigation/AppNavigator'
+// Aşağıdaki yol, App.js'in ana dizinde olduğu varsayımıyla yazılmıştır.
+import AppNavigator from './src/navigation/AppNavigator';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      {/* Ana Başlık */}
-      <Text style={styles.title}>Merhaba UniTAG'lı!</Text>
-      {/* Alt Başlık */}
-      <Text style={styles.subtitle}>Kampüse güvenli yolculuk başlıyor.</Text>
-      {/* Durum çubuğunu (saat, şarj vb.) otomatik ayarla */}
+    <>
+      {/* Navigasyon yapısını uygulamaya dahil ediyoruz */}
+      <AppNavigator />
+      {/* Durum çubuğu (saat, şarj vb.) */}
       <StatusBar style="auto" />
-    </View>
+    </>
   );
 }
-
-// Stiller (CSS benzeri yapı)
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    // Arka plan rengini hafif gri yaptık (daha modern durur)
-    backgroundColor: '#f5f5f5',
-    alignItems: 'center', // Yatayda ortala
-    justifyContent: 'center', // Dikeyde ortala
-  },
-  title: {
-    fontSize: 32, // Yazı boyutu
-    fontWeight: 'bold', // Kalın yazı
-    color: '#333', // Koyu gri renk
-    marginBottom: 10, // Altındaki öğe ile boşluk
-  },
-  subtitle: {
-    fontSize: 18, // Yazı boyutu
-    color: '#666', // Daha açık gri renk
-    textAlign: 'center', // Metni ortala
-    paddingHorizontal: 20, // Yanlardan boşluk bırak
-  },
-});
