@@ -1,17 +1,12 @@
-// src/screens/HomeScreen.js
-
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-// Çıkış işlemi için Firebase auth fonksiyonunu ekleyelim
 import { signOut } from "firebase/auth";
 import { auth } from '../firebaseConfig';
-// --- YENİ EKLENEN KISIM ---
-// Harita bileşenini içe aktaralım
-import MapView from 'react-native-maps';
-// ---------------------------
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 
-// Renk Paletimiz (Tutarlılık için)
+// Renk Paleti
 const colors = {
   background: '#fefbf6',
   primary: '#00c49a',
@@ -20,8 +15,128 @@ const colors = {
   white: '#ffffff',
 };
 
+const RoleToggle = ({ role, setRole }) => {
+  return (
+    <View style={toggleStyles.container}>
+      {/* Sürücü Ol Butonu */}
+      <TouchableOpacity
+        style={[
+          toggleStyles.button,
+          role === 'driver' ? toggleStyles.driverActive : toggleStyles.inactive // Rol 'driver' ise aktif stilini uygula
+        ]}
+        onPress={() => setRole('driver')} // Tıklanınca rolü 'driver' yap
+        activeOpacity={0.8} // Tıklama efekti
+      >
+        {/* İkon ekleyebiliriz (İleride) */}
+        {/* <Ionicons name="car-sport" size={20} color={role === 'driver' ? colors.white : colors.text} /> */}
+        <Text style={[
+          toggleStyles.text,
+          role === 'driver' ? toggleStyles.activeText : toggleStyles.inactiveText
+        ]}>Sürücü Ol</Text>
+      </TouchableOpacity>
+
+      {/* Yolcu Ol Butonu */}
+      <TouchableOpacity
+        style={[
+          toggleStyles.button,
+          role === 'passenger' ? toggleStyles.passengerActive : toggleStyles.inactive // Rol 'passenger' ise aktif stilini uygula
+        ]}
+        onPress={() => setRole('passenger')} // Tıklanınca rolü 'passenger' yap
+        activeOpacity={0.8}
+      >
+        {/* İkon ekleyebiliriz (İleride) */}
+        {/* <Ionicons name="person" size={20} color={role === 'passenger' ? colors.white : colors.text} /> */}
+        <Text style={[
+          toggleStyles.text,
+          role === 'passenger' ? toggleStyles.activeText : toggleStyles.inactiveText
+        ]}>Yolcu Ol</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// RoleToggle Bileşeninin Stilleri
+const toggleStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row', // Yan yana diz
+    backgroundColor: colors.white,
+    borderRadius: 30, // Tamamen yuvarlak köşeler (hap şeklinde)
+    padding: 5, // İçeriden boşluk
+    marginHorizontal: 20, // Yanlardan boşluk
+    marginTop: 15, // Üstten boşluk
+    marginBottom: 10, // Alttan boşluk (Harita ile arası)
+    // Hafif gölge
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  button: {
+    flex: 1, // Alanı eşit paylaş
+    flexDirection: 'row', // İkon ve metni yan yana diz
+    justifyContent: 'center', // İçeriği ortala
+    alignItems: 'center',
+    paddingVertical: 12, // Dikey dolgu
+    borderRadius: 25, // Buton köşeleri
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8, // İkon ile metin arası boşluk (ikon eklenirse)
+  },
+  // Aktif Durum Stilleri
+  driverActive: {
+    backgroundColor: colors.primary, // Canlı Yeşil
+  },
+  passengerActive: {
+    backgroundColor: colors.accent, // Sıcak Mercan
+  },
+  // Pasif Durum Stili
+  inactive: {
+    backgroundColor: 'transparent', // Şeffaf arka plan
+  },
+  // Metin Renkleri
+  activeText: {
+    color: colors.white, // Aktifken beyaz metin
+  },
+  inactiveText: {
+    color: colors.text, // Pasifken koyu metin
+  },
+});
+
 const HomeScreen = ({ navigation }) => {
-  // Çıkış Yap butonuna basıldığında çalışacak fonksiyon
+  const [role, setRole] = React.useState('passenger');
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    (async () => {
+      // 1. Konum izni iste
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Konum izni reddedildi. Uygulamayı kullanmak için lütfen ayarlardan izin verin.');
+        Alert.alert('İzin Gerekli', 'Haritayı kullanabilmek için konum izni vermeniz gerekiyor.');
+        return;
+      }
+
+      // 2. İzin verildiyse, anlık konumu al
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation);
+
+      // 3. Haritayı alınan konuma odakla (animateToRegion)
+      if (mapRef.current && currentLocation) {
+        mapRef.current.animateToRegion({
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+          latitudeDelta: 0.01, // Yakınlaştırma seviyesi (Daha yakın)
+          longitudeDelta: 0.01,
+        }, 1000); // 1 saniyede animasyonla git
+      }
+    })();
+  }, []);
+
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -36,18 +151,41 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar style="dark" />
 
-      {/* --- HARİTA BÖLÜMÜ --- */}
+      {/* --- RoleToggle Bileşeni --- */}
+      <RoleToggle role={role} setRole={setRole} />
+      {/* --------------------------------------------- */}
+
+      {/* HARİTA BÖLÜMÜ */}
       <View style={styles.mapContainer}>
         <MapView
+          ref={mapRef}
           style={styles.map}
-          // Başlangıç konumu (Örn: İstanbul, Beşiktaş)
           initialRegion={{
-            latitude: 41.0422,
-            longitude: 29.0077,
-            latitudeDelta: 0.0922, // Yakınlaştırma seviyesi (daha küçük değer = daha yakın)
+            latitude: 41.0082,
+            longitude: 28.9784,
+            latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
           }}
-        />
+          showsUserLocation={true}
+          followsUserLocation={true}
+        >
+          {location && (
+            <Marker
+              coordinate={{
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+              }}
+              title={"Konumum"}
+              description={"Şu an buradasınız"}
+            />
+          )}
+        </MapView>
+        
+        {errorMsg && (
+            <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{errorMsg}</Text>
+            </View>
+        )}
       </View>
       {/* ----------------------- */}
       
@@ -127,5 +265,19 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: 'bold',
     fontSize: 18,
+  },
+  errorContainer: {
+    position: 'absolute', // Haritanın üzerine binmesi için
+    top: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 59, 48, 0.8)', // Yarı saydam kırmızı
+    padding: 10,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: colors.white,
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
