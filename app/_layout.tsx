@@ -52,6 +52,7 @@ const MainLayout = () => {
       <Stack.Screen name="driver/create-trip" />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen name="profile/edit" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="chat/[id]" />
     </Stack>
   );
 };

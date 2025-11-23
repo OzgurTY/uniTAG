@@ -11,19 +11,17 @@ import { ActivityIndicator, Alert, SafeAreaView, ScrollView, Text, TouchableOpac
 import { styles } from './RideDetailScreen.styles';
 
 export default function RideDetailScreen() {
-  const { id } = useLocalSearchParams(); // URL'den ID'yi al
+  const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuth();
   
   const [ride, setRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  const [updating, setUpdating] = useState(false);
-
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingLoading, setRatingLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
-  // İlan detaylarını taze çek
   useEffect(() => {
     const fetchRide = async () => {
       if (typeof id === 'string') {
@@ -39,28 +37,6 @@ export default function RideDetailScreen() {
     };
     fetchRide();
   }, [id]);
-
-  const handleJoin = async () => {
-    if (!ride || !user) return;
-
-    // Kendi ilanına katılmaya çalışıyorsa engelle
-    if (ride.driverId === user.uid) {
-      Alert.alert('Hata', 'Kendi oluşturduğunuz ilana katılamazsınız.');
-      return;
-    }
-
-    setJoining(true);
-    const result = await RideService.joinRide(ride.id!, user.uid);
-    setJoining(false);
-
-    if (result.success) {
-      Alert.alert('Başarılı', 'Yolculuğa katıldınız! Sürücü ile iletişime geçebilirsiniz.', [
-        { text: 'Tamam', onPress: () => router.back() }
-      ]);
-    } else {
-      Alert.alert('Hata', result.error || 'Bir sorun oluştu.');
-    }
-  };
 
   const handleStatusUpdate = async (newStatus: 'completed' | 'cancelled') => {
     Alert.alert(
@@ -84,6 +60,54 @@ export default function RideDetailScreen() {
               ]);
             } else {
               Alert.alert('Hata', 'İşlem başarısız oldu.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleJoin = async () => {
+    if (!ride || !user) return;
+
+    if (ride.driverId === user.uid) {
+      Alert.alert('Hata', 'Kendi oluşturduğunuz ilana katılamazsınız.');
+      return;
+    }
+
+    setJoining(true);
+    const result = await RideService.joinRide(ride.id!, user.uid);
+    setJoining(false);
+
+    if (result.success) {
+      Alert.alert('Başarılı', 'Yolculuğa katıldınız! Sürücü ile iletişime geçebilirsiniz.', [
+        { text: 'Tamam', onPress: () => router.back() }
+      ]);
+    } else {
+      Alert.alert('Hata', result.error || 'Bir sorun oluştu.');
+    }
+  };
+
+  const handleLeave = () => {
+    Alert.alert(
+      'Yolculuktan Ayrıl',
+      'Bu yolculuktan kaydını silmek istediğine emin misin?',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        { 
+          text: 'Evet, Ayrıl', 
+          style: 'destructive',
+          onPress: async () => {
+            setJoining(true);
+            const result = await RideService.leaveRide(ride!.id!, user!.uid);
+            setJoining(false);
+
+            if (result.success) {
+              Alert.alert('Bilgi', 'Yolculuktan ayrıldınız.', [
+                { text: 'Tamam', onPress: () => router.back() }
+              ]);
+            } else {
+              Alert.alert('Hata', 'Bir sorun oluştu.');
             }
           }
         }
@@ -124,7 +148,6 @@ export default function RideDetailScreen() {
   const isJoined = user ? ride.passengers.includes(user.uid) : false;
   const isOwner = user ? ride.driverId === user.uid : false;
 
-  // Buton metni ve durumu
   let buttonText = "Yolculuğa Katıl";
   let buttonDisabled = false;
 
@@ -170,7 +193,6 @@ export default function RideDetailScreen() {
 
         {/* BİLGİLER */}
         <View style={styles.infoSection}>
-          {/* Tarih & Saat */}
           <View style={styles.infoRow}>
             <IconSymbol name="clock.fill" size={24} color={Colors.primary} />
             <View style={styles.infoContent}>
@@ -179,7 +201,6 @@ export default function RideDetailScreen() {
             </View>
           </View>
 
-          {/* Sürücü */}
           <View style={styles.infoRow}>
             <IconSymbol name="person.fill" size={24} color={Colors.secondary} />
             <View style={styles.infoContent}>
@@ -188,7 +209,6 @@ export default function RideDetailScreen() {
             </View>
           </View>
 
-          {/* Araç */}
           <View style={styles.infoRow}>
             <IconSymbol name="car.fill" size={24} color={Colors.textDark} />
             <View style={styles.infoContent}>
@@ -197,7 +217,6 @@ export default function RideDetailScreen() {
             </View>
           </View>
 
-          {/* Koltuk */}
           <View style={styles.infoRow}>
             <IconSymbol name="person.2.fill" size={24} color={isFull ? Colors.error : Colors.success} />
             <View style={styles.infoContent}>
@@ -210,65 +229,89 @@ export default function RideDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* ALT BUTON */}
       <View style={styles.footer}>
+        {/* DÜZELTME: Sohbet butonu sadece yolculuk AKTİF ise görünür */}
+        {(isOwner || isJoined) && ride.status === 'active' && (
+          <TouchableOpacity 
+            style={[styles.joinButton, { backgroundColor: Colors.secondary, marginBottom: 12, height: 56 }]} 
+            onPress={() => router.push(`/chat/${ride.id}`)}
+            activeOpacity={0.8}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <IconSymbol name="bubble.left.fill" size={20} color="#FFF" />
+              <Text style={styles.joinButtonText}>Sohbet</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {isOwner ? (
-          // SÜRÜCÜ İSE BU BUTONLARI GÖSTER
           <View style={{ gap: 12 }}>
-            {ride.status === 'active' ? (
-              <>
-                <TouchableOpacity 
-                  style={[styles.joinButton, { backgroundColor: Colors.success }]} 
-                  onPress={() => handleStatusUpdate('completed')}
-                  disabled={updating}
-                >
-                  <Text style={styles.joinButtonText}>Yolculuğu Tamamla</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.joinButton, { backgroundColor: Colors.error, height: 48 }]} 
-                  onPress={() => handleStatusUpdate('cancelled')}
-                  disabled={updating}
-                >
-                  <Text style={[styles.joinButtonText, { fontSize: 16 }]}>İlanı İptal Et</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={[styles.joinButton, styles.joinButtonDisabled]}>
-                <Text style={styles.joinButtonText}>
-                  {ride.status === 'completed' ? 'Tamamlandı' : 'İptal Edildi'}
-                </Text>
-              </View>
-            )}
+             {ride.status === 'active' ? (
+               <>
+                 <TouchableOpacity 
+                   style={[styles.joinButton, { backgroundColor: Colors.success }]} 
+                   onPress={() => handleStatusUpdate('completed')}
+                   disabled={updating}
+                 >
+                   <Text style={styles.joinButtonText}>Yolculuğu Tamamla</Text>
+                 </TouchableOpacity>
+                 
+                 <TouchableOpacity 
+                   style={[styles.joinButton, { backgroundColor: Colors.error, height: 48 }]} 
+                   onPress={() => handleStatusUpdate('cancelled')}
+                   disabled={updating}
+                 >
+                   <Text style={[styles.joinButtonText, { fontSize: 16 }]}>İlanı İptal Et</Text>
+                 </TouchableOpacity>
+               </>
+             ) : (
+               <View style={[styles.joinButton, styles.joinButtonDisabled]}>
+                 <Text style={styles.joinButtonText}>
+                   {ride.status === 'completed' ? 'Tamamlandı' : 'İptal Edildi'}
+                 </Text>
+               </View>
+             )}
           </View>
         ) : (
-          // YOLCU İSE ESKİ BUTONU GÖSTER
           <>
             {ride.status === 'completed' && isJoined ? (
-              // YENİ: Tamamlanmışsa Puanla Butonu
               <TouchableOpacity 
-                style={[styles.joinButton, { backgroundColor: Colors.warning }]} // Sarı renk
+                style={[styles.joinButton, { backgroundColor: Colors.warning }]} 
                 onPress={() => setShowRatingModal(true)}
                 activeOpacity={0.8}
               >
                 <Text style={styles.joinButtonText}>Sürücüyü Puanla</Text>
               </TouchableOpacity>
             ) : (
-              // ESKİ: Katıl / Dolu butonu
-              <TouchableOpacity 
-                style={[styles.joinButton, buttonDisabled && styles.joinButtonDisabled]} 
-                onPress={handleJoin}
-                disabled={buttonDisabled || joining}
-                activeOpacity={0.8}
-              >
-                {joining ? (
-                  <ActivityIndicator color="#FFF" />
+              <>
+                {isJoined ? (
+                  <TouchableOpacity 
+                    style={[styles.joinButton, { backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: Colors.error }]}
+                    onPress={handleLeave}
+                    disabled={joining}
+                    activeOpacity={0.8}
+                  >
+                    {joining ? (
+                      <ActivityIndicator color={Colors.error} />
+                    ) : (
+                      <Text style={[styles.joinButtonText, { color: Colors.error }]}>Yolculuktan Ayrıl</Text>
+                    )}
+                  </TouchableOpacity>
                 ) : (
-                  <Text style={styles.joinButtonText}>
-                    {ride.status === 'cancelled' ? 'İptal Edildi' : buttonText}
-                  </Text>
+                  <TouchableOpacity 
+                    style={[styles.joinButton, buttonDisabled && styles.joinButtonDisabled]} 
+                    onPress={handleJoin}
+                    disabled={buttonDisabled || joining}
+                    activeOpacity={0.8}
+                  >
+                    {joining ? (
+                      <ActivityIndicator color="#FFF" />
+                    ) : (
+                      <Text style={styles.joinButtonText}>{buttonText}</Text>
+                    )}
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+              </>
             )}
           </>
         )}
@@ -280,7 +323,6 @@ export default function RideDetailScreen() {
         onSubmit={handleRatingSubmit}
         loading={ratingLoading}
       />
-
     </SafeAreaView>
   );
 }

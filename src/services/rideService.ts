@@ -1,5 +1,6 @@
 import {
     addDoc,
+    arrayRemove,
     arrayUnion,
     collection,
     doc,
@@ -157,6 +158,24 @@ export const RideService = {
       return { success: true };
     } catch (error) {
       console.error("Durum güncelleme hatası:", error);
+      return { success: false, error };
+    }
+  },
+
+  leaveRide: async (rideId: string, userId: string) => {
+    try {
+      const rideRef = doc(db, 'rides', rideId);
+      
+      // Güncelleme işlemi
+      await updateDoc(rideRef, {
+        passengers: arrayRemove(userId), // Kullanıcıyı listeden sil
+        availableSeats: increment(1),    // Koltuk sayısını 1 artır
+        status: 'active'                 // Eğer 'full' ise tekrar 'active' olsun
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Yolculuktan ayrılma hatası:", error);
       return { success: false, error };
     }
   },
