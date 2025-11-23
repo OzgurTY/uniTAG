@@ -2,7 +2,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { RideCard } from '@/src/components/RideCard'; // Eklendi
 import { Colors } from '@/src/constants/colors';
 import { useAuth } from '@/src/context/AuthContext';
-import { AuthService } from '@/src/services/authService';
 import { RideService } from '@/src/services/rideService'; // Eklendi
 import { UserService } from '@/src/services/userService';
 import { Ride } from '@/src/types/ride'; // Eklendi
@@ -50,10 +49,6 @@ export default function HomeScreen() {
     setRefreshing(true);
     await fetchData();
     setRefreshing(false);
-  };
-
-  const handleLogout = async () => {
-    await AuthService.logout();
   };
 
   const toggleDriverMode = () => {
@@ -125,10 +120,6 @@ export default function HomeScreen() {
                 <Text style={styles.actionButtonText}>İlan Ver</Text>
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity style={styles.logoutLink} onPress={handleLogout}>
-              <Text style={styles.logoutText}>Oturumu Kapat</Text>
-            </TouchableOpacity>
           </View>
         </>
       ) : (
