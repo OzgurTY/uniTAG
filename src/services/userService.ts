@@ -1,6 +1,4 @@
-// src/services/userService.ts
-
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { UserProfile } from '../types/user';
 
@@ -32,6 +30,26 @@ export const UserService = {
     } catch (error) {
       console.error("Profil çekme hatası:", error);
       return { data: null, success: false, error };
+    }
+  },
+
+  registerDriver: async (uid: string, driverData: { carModel: string; carColor: string; plateNumber: string }) => {
+    try {
+      const userRef = doc(db, 'users', uid);
+      
+      // Mevcut kullanıcı dokümanını güncelliyoruz (Merge işlemi)
+      await updateDoc(userRef, {
+        role: 'driver', // Rolü sürücü yapıyoruz
+        driverDetails: {
+          ...driverData,
+          verified: true // Şimdilik otomatik onaylı, ileride admin onayı eklenebilir
+        }
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Sürücü kayıt hatası:", error);
+      return { success: false, error };
     }
   }
 };

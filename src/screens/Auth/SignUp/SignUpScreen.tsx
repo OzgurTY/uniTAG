@@ -63,10 +63,6 @@ export default function SignUpScreen() {
     setLoading(false);
 
     if (userProfileResult.success) {
-      Alert.alert('Tebrikler!', 'Hesabınız başarıyla oluşturuldu.', [
-        { text: 'Giriş Yap', onPress: () => router.replace('/auth/login') }
-      ]);
-    } else {
       Alert.alert('Uyarı', 'Hesap açıldı ancak profil oluşturulurken hata oluştu. Lütfen destekle iletişime geçin.');
     }
   };

@@ -31,12 +31,7 @@ export default function LoginScreen() {
 
     if (result.error) {
       Alert.alert('Giriş Başarısız', result.error);
-    } else {
-      // Başarılı giriş! Şimdilik log basıyoruz, ileride Home sayfasına atacağız.
-      console.log("Kullanıcı giriş yaptı:", result.user?.email);
-      // router.replace('/(tabs)/home'); // Bu kısmı daha sonra yapacağız
-      Alert.alert("Hoşgeldin!", "Giriş başarılı.");
-    }
+    } 
   };
 
   return (
