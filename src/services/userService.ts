@@ -1,4 +1,12 @@
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import {
+    collection,
+    doc,
+    getDoc,
+    increment,
+    runTransaction,
+    setDoc,
+    updateDoc
+} from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { UserProfile } from '../types/user';
 
@@ -49,6 +57,46 @@ export const UserService = {
       return { success: true };
     } catch (error) {
       console.error("Sürücü kayıt hatası:", error);
+      return { success: false, error };
+    }
+  },
+
+  rateDriver: async (driverId: string, raterId: string, rating: number, comment: string) => {
+    try {
+      const driverRef = doc(db, 'users', driverId);
+      
+      // Transaction kullanarak güvenli bir şekilde ortalamayı güncelliyoruz
+      await runTransaction(db, async (transaction) => {
+        const driverDoc = await transaction.get(driverRef);
+        if (!driverDoc.exists()) throw "Sürücü bulunamadı!";
+
+        const data = driverDoc.data();
+        const currentRating = data.rating || 0;
+        const currentCount = data.reviewCount || 0;
+
+        // Yeni ortalamayı hesapla
+        // Formül: ((Eski Ortalama * Sayı) + Yeni Puan) / (Sayı + 1)
+        const newRating = ((currentRating * currentCount) + rating) / (currentCount + 1);
+
+        // 1. Sürücü dokümanını güncelle
+        transaction.update(driverRef, {
+          rating: newRating,
+          reviewCount: increment(1)
+        });
+
+        // 2. Yorumu alt koleksiyona ekle (users/DRIVER_ID/reviews/REVIEW_ID)
+        const reviewRef = doc(collection(db, 'users', driverId, 'reviews'));
+        transaction.set(reviewRef, {
+          raterId,
+          rating,
+          comment,
+          createdAt: new Date().toISOString()
+        });
+      });
+
+      return { success: true };
+    } catch (error) {
+      console.error("Puanlama hatası:", error);
       return { success: false, error };
     }
   }

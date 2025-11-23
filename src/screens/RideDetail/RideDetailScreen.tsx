@@ -1,7 +1,9 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { RatingModal } from '@/src/components/RatingModal';
 import { Colors } from '@/src/constants/colors';
 import { useAuth } from '@/src/context/AuthContext';
 import { RideService } from '@/src/services/rideService';
+import { UserService } from '@/src/services/userService';
 import { Ride } from '@/src/types/ride';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -16,6 +18,10 @@ export default function RideDetailScreen() {
   const [ride, setRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   // İlan detaylarını taze çek
   useEffect(() => {
@@ -53,6 +59,50 @@ export default function RideDetailScreen() {
       ]);
     } else {
       Alert.alert('Hata', result.error || 'Bir sorun oluştu.');
+    }
+  };
+
+  const handleStatusUpdate = async (newStatus: 'completed' | 'cancelled') => {
+    Alert.alert(
+      newStatus === 'completed' ? 'Yolculuğu Tamamla' : 'İptal Et',
+      newStatus === 'completed' 
+        ? 'Yolculuk sona erdi mi? Ücretler toplanacak.' 
+        : 'Bu ilanı iptal etmek istediğine emin misin?',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Onayla',
+          style: newStatus === 'cancelled' ? 'destructive' : 'default',
+          onPress: async () => {
+            setUpdating(true);
+            const result = await RideService.updateRideStatus(ride!.id!, newStatus);
+            setUpdating(false);
+
+            if (result.success) {
+              Alert.alert('Başarılı', 'Yolculuk durumu güncellendi.', [
+                { text: 'Tamam', onPress: () => router.back() }
+              ]);
+            } else {
+              Alert.alert('Hata', 'İşlem başarısız oldu.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleRatingSubmit = async (rating: number, comment: string) => {
+    if (!ride || !user) return;
+
+    setRatingLoading(true);
+    const result = await UserService.rateDriver(ride.driverId, user.uid, rating, comment);
+    setRatingLoading(false);
+
+    if (result.success) {
+      setShowRatingModal(false);
+      Alert.alert('Teşekkürler', 'Puanınız kaydedildi.');
+    } else {
+      Alert.alert('Hata', 'Puanlama sırasında bir sorun oluştu.');
     }
   };
 
@@ -162,19 +212,75 @@ export default function RideDetailScreen() {
 
       {/* ALT BUTON */}
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.joinButton, buttonDisabled && styles.joinButtonDisabled]} 
-          onPress={handleJoin}
-          disabled={buttonDisabled || joining}
-          activeOpacity={0.8}
-        >
-          {joining ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <Text style={styles.joinButtonText}>{buttonText}</Text>
-          )}
-        </TouchableOpacity>
+        {isOwner ? (
+          // SÜRÜCÜ İSE BU BUTONLARI GÖSTER
+          <View style={{ gap: 12 }}>
+            {ride.status === 'active' ? (
+              <>
+                <TouchableOpacity 
+                  style={[styles.joinButton, { backgroundColor: Colors.success }]} 
+                  onPress={() => handleStatusUpdate('completed')}
+                  disabled={updating}
+                >
+                  <Text style={styles.joinButtonText}>Yolculuğu Tamamla</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.joinButton, { backgroundColor: Colors.error, height: 48 }]} 
+                  onPress={() => handleStatusUpdate('cancelled')}
+                  disabled={updating}
+                >
+                  <Text style={[styles.joinButtonText, { fontSize: 16 }]}>İlanı İptal Et</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={[styles.joinButton, styles.joinButtonDisabled]}>
+                <Text style={styles.joinButtonText}>
+                  {ride.status === 'completed' ? 'Tamamlandı' : 'İptal Edildi'}
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          // YOLCU İSE ESKİ BUTONU GÖSTER
+          <>
+            {ride.status === 'completed' && isJoined ? (
+              // YENİ: Tamamlanmışsa Puanla Butonu
+              <TouchableOpacity 
+                style={[styles.joinButton, { backgroundColor: Colors.warning }]} // Sarı renk
+                onPress={() => setShowRatingModal(true)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.joinButtonText}>Sürücüyü Puanla</Text>
+              </TouchableOpacity>
+            ) : (
+              // ESKİ: Katıl / Dolu butonu
+              <TouchableOpacity 
+                style={[styles.joinButton, buttonDisabled && styles.joinButtonDisabled]} 
+                onPress={handleJoin}
+                disabled={buttonDisabled || joining}
+                activeOpacity={0.8}
+              >
+                {joining ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.joinButtonText}>
+                    {ride.status === 'cancelled' ? 'İptal Edildi' : buttonText}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </>
+        )}
       </View>
+
+      <RatingModal 
+        visible={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        onSubmit={handleRatingSubmit}
+        loading={ratingLoading}
+      />
+
     </SafeAreaView>
   );
 }

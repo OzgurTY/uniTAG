@@ -132,5 +132,16 @@ export const RideService = {
       console.error("Yolcu ilanları çekme hatası:", error);
       return { success: false, error };
     }
+  },
+
+  updateRideStatus: async (rideId: string, status: 'completed' | 'cancelled') => {
+    try {
+      const rideRef = doc(db, 'rides', rideId);
+      await updateDoc(rideRef, { status });
+      return { success: true };
+    } catch (error) {
+      console.error("Durum güncelleme hatası:", error);
+      return { success: false, error };
+    }
   }
 };
