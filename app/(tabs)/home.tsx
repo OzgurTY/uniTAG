@@ -139,7 +139,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <RideCard 
               ride={item} 
-              onPress={() => console.log("Detaya git:", item.id)} 
+              onPress={() => router.push(`/ride/${item.id}`)} 
             />
           )}
           ListHeaderComponent={() => (
