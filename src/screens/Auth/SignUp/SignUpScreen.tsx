@@ -1,15 +1,15 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/src/constants/colors';
+import { AuthService } from '@/src/services/authService'; // Servisi ekledik
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView, Platform,
     SafeAreaView,
     ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
+    Text, TextInput, TouchableOpacity,
     View
 } from 'react-native';
 import { styles } from './SignUpScreen.styles';
@@ -19,6 +19,36 @@ export default function SignUpScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // Yükleniyor durumu
+
+  const handleRegister = async () => {
+    // 1. Basit Validasyonlar
+    if (!name || !email || !password) {
+      Alert.alert('Eksik Bilgi', 'Lütfen tüm alanları doldurun.');
+      return;
+    }
+
+    // 2. Üniversite E-postası Kontrolü (Niche özellik)
+    if (!email.includes('.edu.tr')) {
+      Alert.alert('Hata', 'Sadece .edu.tr uzantılı üniversite e-postaları ile kayıt olabilirsiniz.');
+      return;
+    }
+
+    setLoading(true);
+
+    // 3. Servis Çağrısı
+    const result = await AuthService.signUp(email, password, name);
+    
+    setLoading(false);
+
+    if (result.error) {
+      Alert.alert('Kayıt Başarısız', result.error);
+    } else {
+      Alert.alert('Başarılı', 'Hesabınız oluşturuldu! Şimdi giriş yapabilirsiniz.', [
+        { text: 'Tamam', onPress: () => router.replace('/auth/login') }
+      ]);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -30,7 +60,7 @@ export default function SignUpScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* 1. HEADER */}
+          {/* HEADER */}
           <View style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton} 
@@ -45,10 +75,9 @@ export default function SignUpScreen() {
             </Text>
           </View>
 
-          {/* 2. FORM */}
+          {/* FORM */}
           <View style={styles.formContainer}>
             
-            {/* İsim Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Ad Soyad</Text>
               <View style={styles.inputWrapper}>
@@ -62,7 +91,6 @@ export default function SignUpScreen() {
               </View>
             </View>
 
-            {/* E-posta Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Okul E-postası</Text>
               <View style={styles.inputWrapper}>
@@ -76,17 +104,14 @@ export default function SignUpScreen() {
                   keyboardType="email-address"
                 />
               </View>
-              
-              {/* Bilgi Kutusu */}
               <View style={styles.infoBox}>
                 <IconSymbol name="info.circle" size={20} color={Colors.primary} />
                 <Text style={styles.infoText}>
-                  Güvenliğin için sadece .edu.tr uzantılı e-postalarla kayıt olabilirsin.
+                  Güvenlik için sadece .edu.tr uzantılı e-postalarla kayıt olabilirsin.
                 </Text>
               </View>
             </View>
 
-            {/* Şifre Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Şifre</Text>
               <View style={styles.inputWrapper}>
@@ -102,14 +127,19 @@ export default function SignUpScreen() {
             </View>
 
             <TouchableOpacity 
-              style={styles.registerButton}
+              style={[styles.registerButton, loading && { opacity: 0.7 }]}
               activeOpacity={0.8}
+              onPress={handleRegister}
+              disabled={loading} // Yüklenirken tıklamayı engelle
             >
-              <Text style={styles.registerButtonText}>Devam Et</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.registerButtonText}>Devam Et</Text>
+              )}
             </TouchableOpacity>
           </View>
 
-          {/* 3. FOOTER */}
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Zaten üye misin?</Text>
             <TouchableOpacity onPress={() => router.push('/auth/login')}>

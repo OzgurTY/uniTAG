@@ -1,14 +1,14 @@
 import { Colors } from '@/src/constants/colors';
+import { AuthService } from '@/src/services/authService';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView, Platform,
     SafeAreaView,
     ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
+    Text, TextInput, TouchableOpacity,
     View
 } from 'react-native';
 import { styles } from './LoginScreen.styles';
@@ -17,9 +17,26 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    console.log('Login:', email);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Hata', 'Lütfen e-posta ve şifrenizi girin.');
+      return;
+    }
+
+    setLoading(true);
+    const result = await AuthService.signIn(email, password);
+    setLoading(false);
+
+    if (result.error) {
+      Alert.alert('Giriş Başarısız', result.error);
+    } else {
+      // Başarılı giriş! Şimdilik log basıyoruz, ileride Home sayfasına atacağız.
+      console.log("Kullanıcı giriş yaptı:", result.user?.email);
+      // router.replace('/(tabs)/home'); // Bu kısmı daha sonra yapacağız
+      Alert.alert("Hoşgeldin!", "Giriş başarılı.");
+    }
   };
 
   return (
@@ -32,7 +49,7 @@ export default function LoginScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* 1. LOGO ALANI */}
+          {/* LOGO */}
           <View style={styles.headerContainer}>
             <View style={styles.logoContainer}>
               <Text style={styles.logoTextUni}>uni</Text>
@@ -41,10 +58,9 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>Kampüsüne hoş geldin.</Text>
           </View>
 
-          {/* 2. FORM ALANI */}
+          {/* FORM */}
           <View style={styles.formContainer}>
             
-            {/* Email Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Üniversite E-postası</Text>
               <View style={styles.inputWrapper}>
@@ -60,7 +76,6 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            {/* Şifre Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Şifre</Text>
               <View style={styles.inputWrapper}>
@@ -79,17 +94,20 @@ export default function LoginScreen() {
               <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
             </TouchableOpacity>
 
-            {/* Giriş Butonu */}
             <TouchableOpacity 
-              style={styles.loginButton} 
+              style={[styles.loginButton, loading && { opacity: 0.7 }]}
               onPress={handleLogin}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Text style={styles.loginButtonText}>Giriş Yap</Text>
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.loginButtonText}>Giriş Yap</Text>
+              )}
             </TouchableOpacity>
           </View>
 
-          {/* 3. FOOTER (Kayıt Ol Linki) */}
           <View style={styles.footerContainer}>
             <Text style={styles.footerText}>Hesabın yok mu?</Text>
             <TouchableOpacity onPress={() => router.push('/auth/signup')}>
