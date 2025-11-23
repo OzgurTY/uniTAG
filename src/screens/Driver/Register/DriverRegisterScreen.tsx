@@ -97,7 +97,7 @@ export default function DriverRegisterScreen() {
             <View style={styles.inputWrapper}>
               <TextInput
                 style={[styles.input, styles.plateInput]}
-                placeholder="34 AB 123"
+                placeholder="34AB123"
                 placeholderTextColor={Colors.textMedium}
                 value={plateNumber}
                 onChangeText={setPlateNumber}

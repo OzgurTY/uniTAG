@@ -63,7 +63,6 @@ export default function SignUpScreen() {
     setLoading(false);
 
     if (userProfileResult.success) {
-      Alert.alert('Uyarı', 'Hesap açıldı ancak profil oluşturulurken hata oluştu. Lütfen destekle iletişime geçin.');
     }
   };
 

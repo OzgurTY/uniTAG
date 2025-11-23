@@ -1,13 +1,10 @@
-// app/_layout.tsx
-
 import { Colors } from '@/src/constants/colors';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router'; // Slot yerine Stack kullandık
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 
-// Yönlendirme Mantığını İçeren Ana Bileşen
 const MainLayout = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
@@ -16,19 +13,26 @@ const MainLayout = () => {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === 'auth' || segments[0] === 'index'; // Auth veya Welcome ekranında mı?
-    const inTabsGroup = segments[0] === '(tabs)'; // Ana sayfada mı?
+    // Hangi grupta olduğumuzu kontrol et
+    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'auth';
+    const inTabsGroup = segments[0] === '(tabs)';
+    const inDriverGroup = segments[0] === 'driver'; // Sürücü klasörünü de tanıttık
+    const isWelcomeScreen = segments.length === 0 || segments[0] === 'index';
 
-    if (isAuthenticated && !inTabsGroup) {
-      // Giriş yapmış ama login ekranındaysa -> Ana sayfaya at
-      router.replace('/(tabs)/home'); 
-    } else if (!isAuthenticated && inTabsGroup) {
-      // Giriş yapmamış ama ana sayfadaysa -> Welcome ekranına at
-      router.replace('/');
+    if (isAuthenticated) {
+      // Giriş yapmış kullanıcı: Sadece Auth veya Welcome ekranındaysa Home'a at.
+      // Eğer 'driver' veya 'tabs' grubundaysa dokunma.
+      if (inAuthGroup || isWelcomeScreen) {
+        router.replace('/(tabs)/home');
+      }
+    } else {
+      // Giriş yapmamış kullanıcı: Korumalı alanlardaysa (Tabs, Driver) Welcome'a at.
+      if (inTabsGroup || inDriverGroup) {
+        router.replace('/');
+      }
     }
   }, [isAuthenticated, isLoading, segments]);
 
-  // Firebase durumu kontrol ederken bekleme ekranı göster
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -37,11 +41,20 @@ const MainLayout = () => {
     );
   }
 
-  // Her şey yüklendiyse normal akışa devam et
-  return <Slot />;
+  // Slot yerine Stack kullanıyoruz ki sayfalar üst üste binebilsin (Push navigation)
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="auth/login" />
+      <Stack.Screen name="auth/signup" />
+      <Stack.Screen name="driver/register" />
+      <Stack.Screen name="driver/create-trip" />
+      <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    </Stack>
+  );
 };
 
-// Uygulamanın Kökü (Root)
 export default function RootLayout() {
   return (
     <AuthProvider>
