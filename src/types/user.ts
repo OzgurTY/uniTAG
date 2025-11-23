@@ -20,4 +20,7 @@ export interface UserProfile {
   studentIdVerified?: boolean;
   // Opsiyonel olarak sürücü detaylarını ekliyoruz
   driverDetails?: DriverDetails; 
+  rating?: number;       // Sürücü Puanı (Örn: 4.8)
+  reviewCount?: number;  // Kaç kişi puanladı?
+  rideCount?: number;    // Kaç yolculuk tamamladı?
 }

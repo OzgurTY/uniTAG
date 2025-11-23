@@ -138,10 +138,26 @@ export const RideService = {
     try {
       const rideRef = doc(db, 'rides', rideId);
       await updateDoc(rideRef, { status });
+
+      // EĞER YOLCULUK TAMAMLANDIYSA: Sürücünün yolculuk sayısını 1 artır
+      if (status === 'completed') {
+        // 1. İlanın detayını çek (Sürücü ID'sini bulmak için)
+        const rideSnap = await getDoc(rideRef);
+        if (rideSnap.exists()) {
+          const rideData = rideSnap.data() as Ride;
+          
+          // 2. Sürücünün profiline git ve sayıyı artır
+          const driverRef = doc(db, 'users', rideData.driverId);
+          await updateDoc(driverRef, {
+            rideCount: increment(1)
+          });
+        }
+      }
+
       return { success: true };
     } catch (error) {
       console.error("Durum güncelleme hatası:", error);
       return { success: false, error };
     }
-  }
+  },
 };

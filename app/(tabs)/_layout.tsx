@@ -1,38 +1,45 @@
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { Platform } from 'react-native';
+
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { Tabs } from 'expo-router';
-import { Platform, useColorScheme } from 'react-native';
+import { Colors } from '@/src/constants/colors';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors.primary, // Aktif iken Mavi (#2563EB)
+        tabBarInactiveTintColor: '#94A3B8',    // Pasif iken Gri
+        
         headerShown: false,
         tabBarButton: HapticTab,
-        // Tab Bar görünümünü biraz güzelleştirelim
         tabBarStyle: Platform.select({
           ios: {
-            position: 'absolute', // Yüzen efekt için
+            position: 'absolute',
             bottom: 20,
             left: 20,
             right: 20,
             borderRadius: 20,
             height: 60,
+            backgroundColor: '#FFFFFF',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 5 },
             shadowOpacity: 0.1,
             shadowRadius: 10,
-            paddingBottom: 0, // iOS safe area düzeltmesi
+            paddingBottom: 0,
+            borderTopWidth: 0,
           },
-          default: {},
+          default: {
+            backgroundColor: '#FFFFFF',
+            height: 60,
+            borderTopWidth: 0,
+            elevation: 10,
+          },
         }),
       }}>
       
-      {/* ANA SAYFA */}
       <Tabs.Screen
         name="home"
         options={{
@@ -41,7 +48,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* YOLCULUKLARIM (Eski Explore yerine) */}
       <Tabs.Screen
         name="trips"
         options={{

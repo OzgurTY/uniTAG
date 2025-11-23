@@ -4,12 +4,13 @@ import { useAuth } from '@/src/context/AuthContext';
 import { AuthService } from '@/src/services/authService';
 import { UserService } from '@/src/services/userService';
 import { UserProfile } from '@/src/types/user';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './ProfileScreen.styles';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,12 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* HEADER: Avatar ve İsim */}
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={{ position: 'absolute', top: 60, right: 24, zIndex: 10 }}
+          onPress={() => router.push('/profile/edit')}
+        >
+          <IconSymbol name="gearshape.fill" size={24} color={Colors.textMedium} />
+        </TouchableOpacity>
         <View style={styles.avatarContainer}>
           <Text style={styles.initials}>{getInitials(profile?.fullName || '')}</Text>
         </View>
@@ -63,12 +70,20 @@ export default function ProfileScreen() {
         {/* İstatistikler (Şimdilik statik, sonra dinamik yapacağız) */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>5.0</Text>
+            {/* Puan varsa göster, yoksa varsayılan 5.0 veya - */}
+            <Text style={styles.statValue}>
+              {profile?.rating ? profile.rating.toFixed(1) : '5.0'}
+            </Text>
             <Text style={styles.statLabel}>Puan</Text>
           </View>
+          
           <View style={styles.divider} />
+          
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>0</Text>
+            {/* Yolculuk sayısı varsa göster, yoksa 0 */}
+            <Text style={styles.statValue}>
+              {profile?.rideCount || 0}
+            </Text>
             <Text style={styles.statLabel}>Yolculuk</Text>
           </View>
         </View>

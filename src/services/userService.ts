@@ -1,5 +1,7 @@
+import { deleteUser } from 'firebase/auth';
 import {
     collection,
+    deleteDoc,
     doc,
     getDoc,
     increment,
@@ -7,7 +9,7 @@ import {
     setDoc,
     updateDoc
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { auth, db } from '../config/firebase';
 import { UserProfile } from '../types/user';
 
 export const UserService = {
@@ -99,5 +101,34 @@ export const UserService = {
       console.error("Puanlama hatası:", error);
       return { success: false, error };
     }
-  }
+  },
+
+  updateUserProfile: async (uid: string, data: Partial<UserProfile>) => {
+    try {
+      const userRef = doc(db, 'users', uid);
+      await updateDoc(userRef, data);
+      return { success: true };
+    } catch (error) {
+      console.error("Profil güncelleme hatası:", error);
+      return { success: false, error };
+    }
+  },
+
+  deleteAccount: async (uid: string) => {
+    try {
+      // 1. Firestore dokümanını sil
+      await deleteDoc(doc(db, 'users', uid));
+      
+      // 2. Auth hesabını sil (Kullanıcının yakın zamanda giriş yapmış olması gerekir)
+      const user = auth.currentUser;
+      if (user) {
+        await deleteUser(user);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error("Hesap silme hatası:", error);
+      return { success: false, error };
+    }
+  },
 };
