@@ -1,6 +1,8 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/src/constants/colors';
 import { AuthService } from '@/src/services/authService'; // Servisi ekledik
+import { UserService } from '@/src/services/userService';
+import { UserProfile } from '@/src/types/user';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -22,13 +24,12 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false); // Yükleniyor durumu
 
   const handleRegister = async () => {
-    // 1. Basit Validasyonlar
+    // 1. Validasyonlar
     if (!name || !email || !password) {
       Alert.alert('Eksik Bilgi', 'Lütfen tüm alanları doldurun.');
       return;
     }
 
-    // 2. Üniversite E-postası Kontrolü (Niche özellik)
     if (!email.includes('.edu.tr')) {
       Alert.alert('Hata', 'Sadece .edu.tr uzantılı üniversite e-postaları ile kayıt olabilirsiniz.');
       return;
@@ -36,17 +37,37 @@ export default function SignUpScreen() {
 
     setLoading(true);
 
-    // 3. Servis Çağrısı
-    const result = await AuthService.signUp(email, password, name);
-    
+    // 2. Auth Kaydı (Kapı Anahtarı)
+    const { user, error } = await AuthService.signUp(email, password, name);
+
+    if (error || !user) {
+      setLoading(false);
+      Alert.alert('Kayıt Başarısız', error || 'Bir hata oluştu');
+      return;
+    }
+
+    // 3. Firestore Kaydı (Kimlik Kartı)
+    const universityDomain = email.split('@')[1]; // "ogrenci@yildiz.edu.tr" -> "yildiz.edu.tr"
+
+    const newUserProfile: UserProfile = {
+      uid: user.uid,
+      email: user.email!,
+      fullName: name,
+      university: universityDomain,
+      role: 'passenger', // Herkes yolcu olarak başlar
+      createdAt: new Date().toISOString(),
+    };
+
+    const userProfileResult = await UserService.createUserProfile(newUserProfile);
+
     setLoading(false);
 
-    if (result.error) {
-      Alert.alert('Kayıt Başarısız', result.error);
-    } else {
-      Alert.alert('Başarılı', 'Hesabınız oluşturuldu! Şimdi giriş yapabilirsiniz.', [
-        { text: 'Tamam', onPress: () => router.replace('/auth/login') }
+    if (userProfileResult.success) {
+      Alert.alert('Tebrikler!', 'Hesabınız başarıyla oluşturuldu.', [
+        { text: 'Giriş Yap', onPress: () => router.replace('/auth/login') }
       ]);
+    } else {
+      Alert.alert('Uyarı', 'Hesap açıldı ancak profil oluşturulurken hata oluştu. Lütfen destekle iletişime geçin.');
     }
   };
 
