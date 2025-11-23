@@ -50,6 +50,7 @@ export default function CreateTripScreen() {
     const rideData = {
       driverId: user.uid,
       driverName: userProfile.data.fullName,
+      driverRating: userProfile.data.rating || 5.0,
       driverCarModel: userProfile.data.driverDetails.carModel,
       driverPlate: userProfile.data.driverDetails.plateNumber,
       origin,

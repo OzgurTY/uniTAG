@@ -2,6 +2,7 @@ export interface Ride {
   id?: string;
   driverId: string;
   driverName: string;
+  driverRating?: number;
   driverCarModel: string;
   driverPlate: string;
   origin: string;      // Kalkış Yeri

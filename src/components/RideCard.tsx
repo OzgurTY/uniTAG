@@ -42,8 +42,19 @@ export function RideCard({ ride, onPress }: RideCardProps) {
 
         {/* Sürücü Bilgisi */}
         <View style={styles.driverInfo}>
-          <IconSymbol name="person.fill" size={14} color={Colors.textMedium} />
-          <Text style={styles.driverName}>{ride.driverName}</Text>
+          <View style={styles.driverRow}>
+            <IconSymbol name="person.fill" size={14} color={Colors.textMedium} />
+            <Text style={styles.driverName} numberOfLines={1}>{ride.driverName}</Text>
+            
+            {/* YENİ: Puan Gösterimi */}
+            <View style={styles.ratingBadge}>
+              <IconSymbol name="star.fill" size={10} color={Colors.warning} />
+              <Text style={styles.ratingText}>
+                {ride.driverRating ? ride.driverRating.toFixed(1) : '5.0'}
+              </Text>
+            </View>
+          </View>
+          
           <Text style={styles.seats}>{ride.availableSeats} boş koltuk</Text>
         </View>
       </View>
@@ -133,14 +144,32 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   driverInfo: {
+    justifyContent: 'space-between'
+  },
+  driverRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
+    marginBottom: 2,
   },
   driverName: {
     fontSize: 12,
     color: Colors.textMedium,
-    flex: 1,
+    maxWidth: 80,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    gap: 2,
+  },
+  ratingText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#D97706', 
   },
   seats: {
     fontSize: 12,
