@@ -110,6 +110,25 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
+  driverActionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // veya 'center' ile gap verebiliriz
+    gap: 16,
+  },
+  iconButton: {
+    flex: 1, // Eşit genişlik
+    height: 64,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  
+  // Eski joinButton stillerini YOLCU için koruyabilirsin
   joinButton: {
     backgroundColor: Colors.primary,
     height: 64,
