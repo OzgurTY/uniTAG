@@ -1,17 +1,20 @@
 import { IconSymbol } from '@/components/ui/icon-symbol'; // Expo sembollerini kullanıyoruz
 import { Colors } from '@/src/constants/colors';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { SafeAreaView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { styles } from './WelcomeScreen.styles';
 
 export default function WelcomeScreen() {
-  
+    
+  const router = useRouter();
+
   const handleLoginPress = () => {
-    console.log("Login pressed");
+    router.push('/auth/login'); // Yönlendirme eklendi
   };
 
   const handleRegisterPress = () => {
-    console.log("Register pressed");
+    router.push('/auth/signup'); // Yönlendirme eklendi
   };
 
   return (
