@@ -1,7 +1,17 @@
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/src/constants/colors';
 import React, { useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { IconSymbol } from './ui/icon-symbol';
 
 interface RatingModalProps {
   visible: boolean;
@@ -22,7 +32,11 @@ export function RatingModal({ visible, onClose, onSubmit, loading = false }: Rat
 
   return (
     <Modal transparent visible={visible} animationType="fade">
-      <View style={styles.overlay}>
+      {/* DÜZELTME: KeyboardAvoidingView ile sarmaladık */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.overlay}
+      >
         <View style={styles.container}>
           <Text style={styles.title}>Yolculuğun Nasıldı?</Text>
           <Text style={styles.subtitle}>Sürücüyü puanla ve deneyimini paylaş.</Text>
@@ -34,7 +48,7 @@ export function RatingModal({ visible, onClose, onSubmit, loading = false }: Rat
                 <IconSymbol 
                   name={star <= rating ? "star.fill" : "star"} 
                   size={32} 
-                  color={Colors.warning} // Sarı renk
+                  color={Colors.warning} 
                 />
               </TouchableOpacity>
             ))}
@@ -48,6 +62,9 @@ export function RatingModal({ visible, onClose, onSubmit, loading = false }: Rat
             multiline
             value={comment}
             onChangeText={setComment}
+            // Klavyeyi kapatmak için "Bitti" butonu ekleyelim
+            returnKeyType="done" 
+            blurOnSubmit={true}
           />
 
           {/* Butonlar */}
@@ -69,7 +86,7 @@ export function RatingModal({ visible, onClose, onSubmit, loading = false }: Rat
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -88,6 +105,12 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '100%',
     alignItems: 'center',
+    // Gölge ekleyerek pop-up hissini güçlendirelim
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 10,
   },
   title: {
     fontSize: 20,
@@ -115,6 +138,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
     marginBottom: 24,
     fontSize: 16,
+    color: Colors.textDark,
   },
   buttons: {
     flexDirection: 'row',
